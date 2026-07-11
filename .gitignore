@@ -1,0 +1,13 @@
+node_modules
+dist
+.DS_Store
+.vite
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# PocketBase
+pb/pb_data
+.env
+.env.local
+backups

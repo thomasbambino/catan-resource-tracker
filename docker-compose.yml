@@ -1,0 +1,27 @@
+# One command to run the whole thing:
+#
+#   PB_ADMIN_EMAIL=you@example.com PB_ADMIN_PASSWORD=change-me docker compose up --build
+#
+# Then open http://localhost:8081 on any phone/laptop on the same network.
+# The image is a single Go binary that bundles the built web app, PocketBase
+# (data + schema), and an in-process WebSocket realtime bridge.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: catan-app
+    ports:
+      - "8081:8080"
+    environment:
+      # PocketBase superuser is created on first boot from these. The admin
+      # UI lives at http://localhost:8081/_/ — you rarely need it.
+      PB_ADMIN_EMAIL: "${PB_ADMIN_EMAIL:-admin@example.com}"
+      PB_ADMIN_PASSWORD: "${PB_ADMIN_PASSWORD:-changeme123}"
+    volumes:
+      - pb_data:/pb/pb_data
+    restart: unless-stopped
+
+volumes:
+  pb_data:
+    name: catan_pb_data

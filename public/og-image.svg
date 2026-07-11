@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c94a2b"/>
+      <stop offset="1" stop-color="#8f341e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <g transform="translate(90, 90)">
+    <rect width="120" height="120" rx="28" fill="#ffffff"/>
+    <path d="M60 20 L100 42 L100 86 L60 108 L20 86 L20 42 Z"
+          stroke="#8f341e" stroke-width="6" stroke-linejoin="round" fill="none"/>
+  </g>
+  <text x="90" y="360" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-weight="800" font-size="88" fill="#ffffff" letter-spacing="-2">Catan Resource Tracker</text>
+  <text x="90" y="430" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-weight="600" font-size="34" fill="rgba(255,255,255,0.9)">Every hand around the table, in your pocket.</text>
+  <text x="90" y="478" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-weight="600" font-size="34" fill="rgba(255,255,255,0.9)">Roll, gain, spend, trade — the banker keeps things honest.</text>
+  <text x="90" y="565" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-weight="700" font-size="26" fill="rgba(255,255,255,0.75)" letter-spacing="2">CATAN.STYLUS.SERVICES</text>
+</svg>

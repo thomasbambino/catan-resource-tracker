@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.vite
+*.tsbuildinfo
+pb/pb_data
+pb_data
+backups
+.env
+.env.local
+server/banker

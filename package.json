@@ -1,0 +1,28 @@
+{
+  "name": "catan-resource-tracker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "app:up": "docker compose up --build -d",
+    "app:down": "docker compose down",
+    "app:logs": "docker compose logs -f app",
+    "db:setup": "node scripts/setup-pb.mjs",
+    "db:backup": "bash scripts/backup-pb.sh"
+  },
+  "dependencies": {
+    "pocketbase": "^0.27.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
