@@ -412,9 +412,12 @@ export const GameView = ({
               <button
                 type="button"
                 className={`ghost seven-btn ${iAmBanker ? 'half' : ''}`}
-                onClick={onRoll7}
+                onClick={() => {
+                  if (!game.rolled7At) onRoll7();
+                  setDiscardOpen(true);
+                }}
               >
-                Rolled a 7
+                {game.rolled7At ? 'Discard for 7' : 'Rolled a 7'}
               </button>
               {iAmBanker && (
                 <button
