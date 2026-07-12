@@ -238,9 +238,11 @@ export const ResourceMoveModal = ({
               maxLength={120}
             />
           </label>
+        </div>
 
-          <p
-            className={`send-preview small ${
+        <div className="modal-actions">
+          <span
+            className={`send-preview-inline small ${
               sameParty ? 'error' : valid ? 'muted' : 'empty'
             }`}
             aria-live="polite"
@@ -249,11 +251,8 @@ export const ResourceMoveModal = ({
               ? 'Pick two different parties.'
               : valid
                 ? `${partyName(game, from)} → ${partyName(game, to)}: ${formatBag(bag)}`
-                : ' '}
-          </p>
-        </div>
-
-        <div className="modal-actions">
+                : ''}
+          </span>
           <button type="button" className="ghost" onClick={onClose}>
             Cancel
           </button>

@@ -815,16 +815,22 @@ h1, h2 { font-weight: 800; }
   font-size: 18px;
 }
 .swap-btn:hover { background: var(--line-soft); }
-.send-preview {
-  text-align: center;
-  margin: 6px 0 0;
-  height: 20px;
-  line-height: 20px;
+/* Inline preview inside the modal-actions row. Sits to the left of the
+   buttons and grows/shrinks horizontally — vertical layout stays fixed
+   because the row height is anchored by the buttons, not the preview. */
+.send-preview-inline {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-soft);
   font-size: 13px;
+  text-align: left;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 20px;
 }
-.send-preview.empty { visibility: hidden; }
-.send-preview.error { color: var(--danger); font-weight: 600; }
+.send-preview-inline.empty { visibility: hidden; }
+.send-preview-inline.error { color: var(--danger); font-weight: 600; }
 .send-modal .modal-body { display: flex; flex-direction: column; gap: 14px; }
 
 /* ---------- modals ---------- */
