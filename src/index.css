@@ -815,7 +815,14 @@ h1, h2 { font-weight: 800; }
   font-size: 18px;
 }
 .swap-btn:hover { background: var(--line-soft); }
-.send-preview { text-align: center; margin: 2px 0 0; }
+.send-preview {
+  text-align: center;
+  margin: 2px 0 0;
+  min-height: 1.5em;
+  line-height: 1.5em;
+}
+.send-preview.empty { visibility: hidden; }
+.send-preview.error { color: var(--danger); font-weight: 600; }
 .send-modal .modal-body { display: flex; flex-direction: column; gap: 14px; }
 
 /* ---------- modals ---------- */

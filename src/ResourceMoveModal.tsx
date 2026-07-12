@@ -239,14 +239,18 @@ export const ResourceMoveModal = ({
             />
           </label>
 
-          {sameParty && (
-            <p className="pin-error">Pick two different parties.</p>
-          )}
-          {valid && (
-            <p className="send-preview muted small">
-              {partyName(game, from)} → {partyName(game, to)}: {formatBag(bag)}
-            </p>
-          )}
+          <p
+            className={`send-preview small ${
+              sameParty ? 'error' : valid ? 'muted' : 'empty'
+            }`}
+            aria-live="polite"
+          >
+            {sameParty
+              ? 'Pick two different parties.'
+              : valid
+                ? `${partyName(game, from)} → ${partyName(game, to)}: ${formatBag(bag)}`
+                : ' '}
+          </p>
         </div>
 
         <div className="modal-actions">
