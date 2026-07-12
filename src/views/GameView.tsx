@@ -9,6 +9,7 @@ import {
   Player,
   RESOURCES,
   RESOURCE_LABEL,
+  Resource,
   ResourceBag,
   Txn,
   TxnKind,
@@ -97,6 +98,7 @@ export const GameView = ({
   const [editOpen, setEditOpen] = useState(false);
   const [move, setMove] = useState<MovePreset | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const ended = game.endedAt !== null;
@@ -125,7 +127,45 @@ export const GameView = ({
   const myTotal = bagTotal(myHand);
 
   const [pop, setPop] = useState(false);
+  const [floaters, setFloaters] = useState<
+    { id: string; resource: Resource; delta: number }[]
+  >([]);
   const prevTotalRef = useRef<number | null>(null);
+  const prevHandRef = useRef<ResourceBag | null>(null);
+
+  // Per-resource change detector — spawns a floater on each tile whose
+  // count moved, and (via .shake in the tile's className) rattles the
+  // tile when the count dropped. Watching game.txns instead of the
+  // freshly-computed hand bag avoids a mount-effect infinite loop.
+  useEffect(() => {
+    if (!me) {
+      prevHandRef.current = null;
+      return;
+    }
+    const current = handOf(game, me.id);
+    if (prevHandRef.current === null) {
+      prevHandRef.current = current;
+      return;
+    }
+    const prev = prevHandRef.current;
+    const newFloaters = RESOURCES
+      .map((r) => ({ resource: r, delta: current[r] - prev[r] }))
+      .filter((f) => f.delta !== 0)
+      .map((f) => ({
+        id: `f-${f.resource}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        ...f,
+      }));
+    prevHandRef.current = current;
+    if (newFloaters.length === 0) return;
+    setFloaters((cur) => [...cur, ...newFloaters]);
+    const ids = newFloaters.map((f) => f.id);
+    const t = window.setTimeout(() => {
+      setFloaters((cur) => cur.filter((f) => !ids.includes(f.id)));
+    }, 1300);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.txns, me]);
+
   useEffect(() => {
     if (!me) {
       prevTotalRef.current = null;
@@ -274,10 +314,12 @@ export const GameView = ({
           <ul className="hand-cards" aria-label="Your resource cards">
             {RESOURCES.map((r) => {
               const n = myHand[r];
+              const active = floaters.filter((f) => f.resource === r);
+              const shaking = active.some((f) => f.delta < 0);
               return (
                 <li
                   key={r}
-                  className={`hand-card res-${r} ${n === 0 ? 'empty' : ''}`}
+                  className={`hand-card res-${r} ${n === 0 ? 'empty' : ''} ${shaking ? 'shake' : ''}`}
                   title={`${n} ${RESOURCE_LABEL[r]}`}
                 >
                   <div className="hand-card-art" aria-hidden="true">
@@ -285,6 +327,15 @@ export const GameView = ({
                   </div>
                   <div className="hand-card-count">{n}</div>
                   <div className="hand-card-label">{RESOURCE_LABEL[r]}</div>
+                  {active.map((f) => (
+                    <span
+                      key={f.id}
+                      className={`hand-card-floater ${f.delta > 0 ? 'up' : 'down'}`}
+                      aria-hidden="true"
+                    >
+                      {f.delta > 0 ? `+${f.delta}` : f.delta}
+                    </span>
+                  ))}
                 </li>
               );
             })}
@@ -321,6 +372,13 @@ export const GameView = ({
                 onClick={() => setMove({ from: me.id })}
               >
                 <ArrowIcon size={16} /> Trade / move cards
+              </button>
+              <button
+                type="button"
+                className="ghost seven-btn"
+                onClick={() => setDiscardOpen(true)}
+              >
+                Rolled a 7 — discard cards
               </button>
               {iAmBanker && (
                 <button
@@ -469,6 +527,181 @@ export const GameView = ({
           }}
         />
       )}
+
+      {discardOpen && (
+        <DiscardOn7Modal
+          game={game}
+          myId={me?.id ?? null}
+          iAmBanker={iAmBanker}
+          onClose={() => setDiscardOpen(false)}
+          onDiscard={(playerId, bag) =>
+            onAddTxn({
+              from: playerId,
+              to: BANK,
+              resources: bag,
+              kind: 'discard',
+              note: 'Discarded on 7',
+            })
+          }
+        />
+      )}
+    </div>
+  );
+};
+
+const DiscardOn7Modal = ({
+  game,
+  myId,
+  iAmBanker,
+  onClose,
+  onDiscard,
+}: {
+  game: Game;
+  myId: string | null;
+  iAmBanker: boolean;
+  onClose: () => void;
+  onDiscard: (playerId: string, bag: ResourceBag) => void;
+}) => {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const overCap = game.players
+    .map((p) => ({ p, size: handSize(game, p.id), hand: handOf(game, p.id) }))
+    .filter((row) => row.size > 7);
+
+  const [drafts, setDrafts] = useState<Record<string, ResourceBag>>({});
+  const getDraft = (pid: string): ResourceBag => drafts[pid] ?? emptyBag();
+  const setDraft = (pid: string, bag: ResourceBag) =>
+    setDrafts((cur) => ({ ...cur, [pid]: bag }));
+
+  return (
+    <div
+      className="modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="modal panel discard-modal">
+        <h2 className="modal-title">Rolled a 7</h2>
+        <div className="modal-body">
+          {overCap.length === 0 ? (
+            <p className="muted">
+              No one is over 7 cards. Move the robber and steal.
+            </p>
+          ) : (
+            <>
+              <p className="muted small">
+                Anyone holding more than 7 cards discards half (rounded down).
+                Non-banker players can only fill in their own row.
+              </p>
+              <ul className="discard-list">
+                {overCap.map(({ p, size, hand }) => {
+                  const required = Math.floor(size / 2);
+                  const draft = getDraft(p.id);
+                  const picked = bagTotal(draft);
+                  const canEdit = iAmBanker || p.id === myId;
+                  const overPickPerResource = RESOURCES.some(
+                    (r) => (draft[r] ?? 0) > (hand[r] ?? 0),
+                  );
+                  const valid = picked === required && !overPickPerResource;
+                  return (
+                    <li
+                      key={p.id}
+                      className={`discard-row ${canEdit ? '' : 'locked'}`}
+                    >
+                      <div className="discard-row-head">
+                        <div>
+                          <div className="discard-row-name">{p.name}</div>
+                          <div className="muted small">
+                            Holding {size} cards · needs to discard {required}
+                          </div>
+                        </div>
+                        <div
+                          className={`discard-tally ${
+                            picked === required ? 'ok' : ''
+                          }`}
+                        >
+                          {picked} / {required}
+                        </div>
+                      </div>
+                      <ul className="discard-steppers">
+                        {RESOURCES.map((r) => {
+                          const have = hand[r];
+                          const cur = draft[r] ?? 0;
+                          return (
+                            <li key={r} className={`discard-stepper res-${r}`}>
+                              <span className="discard-stepper-art" aria-hidden="true">
+                                <ResourceArt resource={r} size={24} />
+                              </span>
+                              <span className="discard-stepper-have muted small">
+                                {have}
+                              </span>
+                              <div className="resource-stepper-controls">
+                                <button
+                                  type="button"
+                                  disabled={!canEdit || cur <= 0}
+                                  aria-label={`Discard one fewer ${RESOURCE_LABEL[r]}`}
+                                  onClick={() =>
+                                    setDraft(p.id, { ...draft, [r]: cur - 1 })
+                                  }
+                                >
+                                  −
+                                </button>
+                                <span className="resource-stepper-count">{cur}</span>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    !canEdit ||
+                                    cur >= have ||
+                                    picked >= required
+                                  }
+                                  aria-label={`Discard one more ${RESOURCE_LABEL[r]}`}
+                                  onClick={() =>
+                                    setDraft(p.id, { ...draft, [r]: cur + 1 })
+                                  }
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <div className="discard-row-actions">
+                        <button
+                          type="button"
+                          className="primary"
+                          disabled={!canEdit || !valid}
+                          onClick={() => {
+                            onDiscard(p.id, draft);
+                            setDraft(p.id, emptyBag());
+                          }}
+                        >
+                          {canEdit
+                            ? `Discard ${required}`
+                            : `Waiting for ${p.name}`}
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="ghost" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
