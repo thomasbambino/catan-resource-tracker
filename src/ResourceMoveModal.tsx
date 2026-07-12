@@ -10,7 +10,6 @@ import {
   bagIsEmpty,
   bagTotal,
   emptyBag,
-  formatBag,
   handOf,
   isBank,
   partyName,
@@ -241,18 +240,6 @@ export const ResourceMoveModal = ({
         </div>
 
         <div className="modal-actions">
-          <span
-            className={`send-preview-inline small ${
-              sameParty ? 'error' : valid ? 'muted' : 'empty'
-            }`}
-            aria-live="polite"
-          >
-            {sameParty
-              ? 'Pick two different parties.'
-              : valid
-                ? `${partyName(game, from)} → ${partyName(game, to)}: ${formatBag(bag)}`
-                : ''}
-          </span>
           <button type="button" className="ghost" onClick={onClose}>
             Cancel
           </button>
