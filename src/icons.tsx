@@ -201,6 +201,22 @@ export const ScrewIcon = ({ size = 22 }: { size?: number }) => (
 );
 
 // A pointy-top hexagon, the app mark. Matches the Catan hex tile shape.
+export const ClubIcon = ({ size = 22, className }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="7" r="3.4" />
+    <circle cx="7.5" cy="13" r="3.4" />
+    <circle cx="16.5" cy="13" r="3.4" />
+    <path d="M10.5 20 c0.7-2.5 1-3.5 1.5-5.5 0.5 2 0.8 3 1.5 5.5 z" />
+  </svg>
+);
+
 export const HexIcon = ({ size = 22, className }: IconProps) => (
   <svg
     width={size}

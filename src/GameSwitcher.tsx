@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import { BillIcon, HexIcon, ScrewIcon } from './icons';
+import { BillIcon, ClubIcon, HexIcon, ScrewIcon } from './icons';
 
 type GameKey = 'catan' | 'monopoly' | 'konkan' | 'screw';
 
@@ -24,11 +24,20 @@ const SCREW_URL =
   'https://screw.stylus.services';
 
 const GAMES: GameDef[] = [
-  { key: 'catan', label: 'Catan Resource Tracker', symbol: <HexIcon size={22} />, url: CATAN_URL },
-  { key: 'monopoly', label: 'Monopoly Banker', symbol: <BillIcon size={22} />, url: MONOPOLY_URL },
-  { key: 'konkan', label: 'Konkan', symbol: '♣', url: KONKAN_URL },
+  { key: 'konkan', label: 'Konkan', symbol: <ClubIcon size={22} />, url: KONKAN_URL },
   { key: 'screw', label: 'Screw Your Neighbor', symbol: <ScrewIcon size={22} />, url: SCREW_URL },
+  { key: 'monopoly', label: 'Monopoly Banker', symbol: <BillIcon size={22} />, url: MONOPOLY_URL },
+  { key: 'catan', label: 'Catan Resource Tracker', symbol: <HexIcon size={22} />, url: CATAN_URL },
 ];
+
+// One-word wordmarks used on the title button — the dropdown items
+// still show the full label so it's clear what each app is.
+const SHORT: Record<GameKey, string> = {
+  konkan: 'Konkan',
+  screw: 'Screw',
+  monopoly: 'Monopoly',
+  catan: 'Catan',
+};
 
 export const GameSwitcher = ({ current }: { current: GameKey }) => {
   const [open, setOpen] = useState(false);
@@ -67,13 +76,7 @@ export const GameSwitcher = ({ current }: { current: GameKey }) => {
         aria-expanded={open}
       >
         <span className="logo">{here.symbol}</span>
-        <span className="title-word">
-          {here.key === 'screw'
-            ? 'Screw'
-            : here.key === 'catan'
-              ? 'Catan'
-              : here.label}
-        </span>
+        <span className="title-word">{SHORT[here.key]}</span>
         <span className={`switcher-chev ${open ? 'open' : ''}`} aria-hidden="true">
           ▾
         </span>
