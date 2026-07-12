@@ -23,6 +23,7 @@ import {
   updateGameBanker as dbUpdateGameBanker,
   updateGameEnded as dbUpdateGameEnded,
   updateGamePlayers as dbUpdateGamePlayers,
+  updateGameRolled7 as dbUpdateGameRolled7,
 } from './db';
 import { connectWsRealtime, WsStatus } from './realtime';
 import { filterVisibleGames } from './visibility';
@@ -163,6 +164,7 @@ export const App = () => {
             merged.name === existing.name &&
             merged.endedAt === existing.endedAt &&
             merged.banker === existing.banker &&
+            merged.rolled7At === existing.rolled7At &&
             JSON.stringify(merged.players) === JSON.stringify(existing.players)
           ) {
             return cur;
@@ -377,6 +379,20 @@ export const App = () => {
     [games, showError],
   );
 
+  const setRolled7 = useCallback(
+    async (gameId: string, rolled7At: number | null) => {
+      setGames((cur) =>
+        cur.map((g) => (g.id === gameId ? { ...g, rolled7At } : g)),
+      );
+      try {
+        await dbUpdateGameRolled7(gameId, rolled7At);
+      } catch (e) {
+        showError(e);
+      }
+    },
+    [showError],
+  );
+
   const endGame = useCallback(
     async (gameId: string) => {
       const ts = Date.now();
@@ -491,6 +507,8 @@ export const App = () => {
           onRemoveTxn={(tid) => removeTxn(game.id, tid)}
           onUpdatePlayers={(players) => updatePlayers(game.id, players)}
           onTransferBanker={(banker) => transferBanker(game.id, banker)}
+          onRoll7={() => setRolled7(game.id, Date.now())}
+          onClearRoll7={() => setRolled7(game.id, null)}
           onEndGame={() => endGame(game.id)}
           onReopenGame={() => reopenGame(game.id)}
           onDeleteGame={async () => {

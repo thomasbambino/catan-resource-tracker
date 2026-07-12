@@ -44,6 +44,8 @@ interface Props {
   onRemoveTxn: (txnId: string) => void;
   onUpdatePlayers: (players: Player[]) => void;
   onTransferBanker: (banker: string) => void;
+  onRoll7: () => void;
+  onClearRoll7: () => void;
   onEndGame: () => void;
   onReopenGame: () => void;
   onDeleteGame: () => void;
@@ -81,6 +83,8 @@ export const GameView = ({
   onRemoveTxn,
   onUpdatePlayers,
   onTransferBanker,
+  onRoll7,
+  onClearRoll7,
   onEndGame,
   onReopenGame,
   onDeleteGame,
@@ -182,6 +186,33 @@ export const GameView = ({
     const t = window.setTimeout(() => setPop(false), 650);
     return () => window.clearTimeout(t);
   }, [myTotal, me]);
+
+  // Auto-open the discard picker on this device whenever the roll timestamp
+  // advances and my current hand is over 7. Tracked locally so I don't
+  // reopen the modal after I manually close it.
+  const seenRoll7Ref = useRef<number | null>(null);
+  useEffect(() => {
+    const stamp = game.rolled7At;
+    if (!stamp) {
+      seenRoll7Ref.current = null;
+      return;
+    }
+    if (seenRoll7Ref.current === stamp) return;
+    seenRoll7Ref.current = stamp;
+    if (me && handSize(game, me.id) > 7) {
+      setDiscardOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.rolled7At]);
+
+  // Banker auto-clears the roll flag once no player is over 7 anymore.
+  useEffect(() => {
+    if (!iAmBanker) return;
+    if (!game.rolled7At) return;
+    const anyOver = game.players.some((p) => handSize(game, p.id) > 7);
+    if (!anyOver) onClearRoll7();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.rolled7At, game.txns, game.players, iAmBanker]);
 
   const spend = (playerId: string, cost: ResourceBag, note: string) => {
     if (!canAfford(game, playerId, cost)) return;
@@ -381,7 +412,7 @@ export const GameView = ({
               <button
                 type="button"
                 className={`ghost seven-btn ${iAmBanker ? 'half' : ''}`}
-                onClick={() => setDiscardOpen(true)}
+                onClick={onRoll7}
               >
                 Rolled a 7
               </button>

@@ -27,6 +27,8 @@ export const gameFromRecord = (g: RecordModel, txns: Txn[] = []): Game => {
   const players: Player[] = Array.isArray(g.players_json) ? g.players_json : [];
   const rawBanker = typeof g.banker === 'string' ? g.banker : '';
   const banker = rawBanker || (players[0]?.id ?? '');
+  const rolled7Raw = typeof g.rolled7_at === 'number' ? g.rolled7_at : 0;
+  const rolled7At = rolled7Raw > 0 ? rolled7Raw : null;
   return {
     id: g.id,
     name: g.name,
@@ -34,6 +36,7 @@ export const gameFromRecord = (g: RecordModel, txns: Txn[] = []): Game => {
     endedAt: g.ended_at ? tsToMs(g.ended_at) : null,
     players,
     banker,
+    rolled7At,
     txns,
   };
 };
@@ -124,6 +127,15 @@ export const updateGameBanker = async (
   banker: string,
 ): Promise<void> => {
   await pb.collection('games').update(id, { banker });
+};
+
+export const updateGameRolled7 = async (
+  id: string,
+  rolled7At: number | null,
+): Promise<void> => {
+  await pb.collection('games').update(id, {
+    rolled7_at: rolled7At === null ? 0 : rolled7At,
+  });
 };
 
 export const updateGameEnded = async (

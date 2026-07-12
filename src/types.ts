@@ -111,6 +111,10 @@ export interface Game {
   // Player id of the current banker. Only the banker can move other
   // players' resources, deal from the bank, or resolve the robber.
   banker: string;
+  // Timestamp (ms) of the most recent 7 roll. Clients watch this field
+  // and auto-open the discard picker when it changes and their hand is
+  // over 7. Null when no pending 7.
+  rolled7At: number | null;
   txns: Txn[];
 }
 
