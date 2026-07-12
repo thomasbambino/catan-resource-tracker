@@ -195,12 +195,17 @@ export const GameView = ({
   };
 
   const handleDeleteTxn = async (t: Txn) => {
+    const involved = t.from === me?.id || t.to === me?.id;
+    const size = bagTotal(t.resources);
+    const summary = involved
+      ? formatBag(t.resources)
+      : `${size} card${size === 1 ? '' : 's'}`;
     const ok = await confirm({
       title: 'Undo this transaction?',
       body: (
         <p className="muted">
-          {partyName(game, t.from)} → {partyName(game, t.to)}: {formatBag(t.resources)}.
-          Hands will be recalculated.
+          {partyName(game, t.from)} → {partyName(game, t.to)}: {summary}. Hands
+          will be recalculated.
         </p>
       ),
       confirmLabel: 'Undo',
@@ -413,8 +418,7 @@ export const GameView = ({
         </div>
         <ul className="balance-list">
           {sortedPlayers.map((p) => {
-            const hand = handOf(game, p.id);
-            const total = bagTotal(hand);
+            const total = handSize(game, p.id);
             const isMe = me?.id === p.id;
             const isBankerRow = banker?.id === p.id;
             return (
@@ -427,15 +431,10 @@ export const GameView = ({
                   {isMe && <span className="muted small"> (you)</span>}
                   {isBankerRow && <span className="banker-badge">Banker</span>}
                 </span>
-                <span className="balance-hand-summary" aria-hidden="true">
-                  {RESOURCES.map((r) => (
-                    <span key={r} className={`hand-mini res-${r} ${hand[r] === 0 ? 'empty' : ''}`}>
-                      <ResourceArt resource={r} size={18} />
-                      <span className="hand-mini-n">{hand[r]}</span>
-                    </span>
-                  ))}
+                <span className="balance-amount">
+                  {total}
+                  <span className="balance-amount-suffix"> cards</span>
                 </span>
-                <span className="balance-amount">{total}</span>
                 {!ended && iAmBanker && !isMe && (
                   <button
                     type="button"
@@ -472,14 +471,20 @@ export const GameView = ({
                   </span>
                   {t.note && <span className="txn-note muted small">{t.note}</span>}
                 </div>
-                <span className="txn-amount" aria-hidden="true">
-                  {RESOURCES.filter((r) => (t.resources[r] ?? 0) > 0).map((r) => (
-                    <span key={r} className={`cost-glyph res-${r}`}>
-                      <span className="cost-glyph-n">{t.resources[r]}</span>
-                      <ResourceArt resource={r} size={16} />
-                    </span>
-                  ))}
-                </span>
+                {(t.from === me?.id || t.to === me?.id) ? (
+                  <span className="txn-amount" aria-hidden="true">
+                    {RESOURCES.filter((r) => (t.resources[r] ?? 0) > 0).map((r) => (
+                      <span key={r} className={`cost-glyph res-${r}`}>
+                        <span className="cost-glyph-n">{t.resources[r]}</span>
+                        <ResourceArt resource={r} size={16} />
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="txn-amount txn-amount-masked">
+                    {bagTotal(t.resources)} card{bagTotal(t.resources) === 1 ? '' : 's'}
+                  </span>
+                )}
                 <span className="txn-time muted small">{txnTime(t.createdAt)}</span>
                 {!ended && iAmBanker && (
                   <button
@@ -532,7 +537,6 @@ export const GameView = ({
         <DiscardOn7Modal
           game={game}
           myId={me?.id ?? null}
-          iAmBanker={iAmBanker}
           onClose={() => setDiscardOpen(false)}
           onDiscard={(playerId, bag) =>
             onAddTxn({
@@ -552,13 +556,11 @@ export const GameView = ({
 const DiscardOn7Modal = ({
   game,
   myId,
-  iAmBanker,
   onClose,
   onDiscard,
 }: {
   game: Game;
   myId: string | null;
-  iAmBanker: boolean;
   onClose: () => void;
   onDiscard: (playerId: string, bag: ResourceBag) => void;
 }) => {
@@ -599,26 +601,40 @@ const DiscardOn7Modal = ({
             <>
               <p className="muted small">
                 Anyone holding more than 7 cards discards half (rounded down).
-                Non-banker players can only fill in their own row.
+                Each player picks their own cards on their own phone.
               </p>
               <ul className="discard-list">
                 {overCap.map(({ p, size, hand }) => {
                   const required = Math.floor(size / 2);
+                  const canEdit = p.id === myId;
+                  if (!canEdit) {
+                    return (
+                      <li key={p.id} className="discard-row locked">
+                        <div className="discard-row-head">
+                          <div>
+                            <div className="discard-row-name">{p.name}</div>
+                            <div className="muted small">
+                              Holding {size} cards · needs to discard {required}
+                            </div>
+                          </div>
+                          <div className="discard-tally">
+                            waiting
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  }
                   const draft = getDraft(p.id);
                   const picked = bagTotal(draft);
-                  const canEdit = iAmBanker || p.id === myId;
                   const overPickPerResource = RESOURCES.some(
                     (r) => (draft[r] ?? 0) > (hand[r] ?? 0),
                   );
                   const valid = picked === required && !overPickPerResource;
                   return (
-                    <li
-                      key={p.id}
-                      className={`discard-row ${canEdit ? '' : 'locked'}`}
-                    >
+                    <li key={p.id} className="discard-row">
                       <div className="discard-row-head">
                         <div>
-                          <div className="discard-row-name">{p.name}</div>
+                          <div className="discard-row-name">{p.name} (you)</div>
                           <div className="muted small">
                             Holding {size} cards · needs to discard {required}
                           </div>
@@ -646,7 +662,7 @@ const DiscardOn7Modal = ({
                               <div className="resource-stepper-controls">
                                 <button
                                   type="button"
-                                  disabled={!canEdit || cur <= 0}
+                                  disabled={cur <= 0}
                                   aria-label={`Discard one fewer ${RESOURCE_LABEL[r]}`}
                                   onClick={() =>
                                     setDraft(p.id, { ...draft, [r]: cur - 1 })
@@ -657,11 +673,7 @@ const DiscardOn7Modal = ({
                                 <span className="resource-stepper-count">{cur}</span>
                                 <button
                                   type="button"
-                                  disabled={
-                                    !canEdit ||
-                                    cur >= have ||
-                                    picked >= required
-                                  }
+                                  disabled={cur >= have || picked >= required}
                                   aria-label={`Discard one more ${RESOURCE_LABEL[r]}`}
                                   onClick={() =>
                                     setDraft(p.id, { ...draft, [r]: cur + 1 })
@@ -678,15 +690,13 @@ const DiscardOn7Modal = ({
                         <button
                           type="button"
                           className="primary"
-                          disabled={!canEdit || !valid}
+                          disabled={!valid}
                           onClick={() => {
                             onDiscard(p.id, draft);
                             setDraft(p.id, emptyBag());
                           }}
                         >
-                          {canEdit
-                            ? `Discard ${required}`
-                            : `Waiting for ${p.name}`}
+                          Discard {required}
                         </button>
                       </div>
                     </li>

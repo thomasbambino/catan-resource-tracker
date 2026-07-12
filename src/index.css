@@ -1261,28 +1261,16 @@ h1, h2 { font-weight: 800; }
 .cost-glyph-n { line-height: 1; }
 .trade-btn { grid-column: 1 / -1; padding: 13px; }
 
-/* Compact resource summary on each player's row in the players list. */
-.balance-hand-summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-right: 8px;
+/* Balance amount on players list now shows only the total count — the
+   per-resource breakdown is private to each player's own device. */
+.balance-amount-suffix {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--ink-soft);
+  letter-spacing: 0;
+  margin-left: 4px;
+  text-transform: lowercase;
 }
-.hand-mini {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 6px 2px 3px;
-  border-radius: var(--radius-pill);
-  background: var(--line-soft);
-  border: 1px solid var(--line);
-  font-size: 11px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-.hand-mini.empty { opacity: 0.3; }
-.hand-mini-n { line-height: 1; }
 
 /* On the log rows, the cost-glyph pills should read on the light card
    background — override the translucent-white variant. */
@@ -1297,6 +1285,14 @@ h1, h2 { font-weight: 800; }
   background: var(--line-soft);
   border: 1px solid var(--line);
   color: var(--ink);
+}
+/* Log entries you weren't part of show only the total, not the
+   breakdown — you're supposed to remember from the table. */
+.txn-amount-masked {
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Steppers inside the ResourceMoveModal. */
