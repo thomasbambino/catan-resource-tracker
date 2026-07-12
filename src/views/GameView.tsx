@@ -28,7 +28,7 @@ import {
 import { useConfirm } from '../ConfirmDialog';
 import { navigate } from '../App';
 import { MovePreset, ResourceMoveModal } from '../ResourceMoveModal';
-import { ArrowIcon, BankIcon } from '../icons';
+import { ArrowIcon, BankIcon, ResourceArt } from '../icons';
 
 interface Props {
   game: Game;
@@ -262,22 +262,32 @@ export const GameView = ({
 
       {me ? (
         <div className="my-balance panel">
-          <div className="my-balance-label muted">
-            Your hand
-            {iAmBanker && <span className="banker-badge-inline">Banker</span>}
+          <div className="my-balance-head">
+            <div className="my-balance-label muted">
+              Your hand
+              {iAmBanker && <span className="banker-badge-inline">Banker</span>}
+            </div>
+            <div className={`my-balance-total ${pop ? 'pop' : ''}`}>
+              {myTotal} <span>cards</span>
+            </div>
           </div>
-          <div className={`my-balance-amount ${pop ? 'pop' : ''}`}>
-            {myTotal}
-            <span className="my-balance-suffix"> cards</span>
-          </div>
-          <ul className="my-hand-chips" aria-label="Your resource cards">
-            {RESOURCES.map((r) => (
-              <li key={r} className={`hand-chip res-${r}`}>
-                <span className="hand-chip-swatch" aria-hidden="true" />
-                <span className="hand-chip-count">{myHand[r]}</span>
-                <span className="hand-chip-label">{RESOURCE_LABEL[r]}</span>
-              </li>
-            ))}
+          <ul className="hand-cards" aria-label="Your resource cards">
+            {RESOURCES.map((r) => {
+              const n = myHand[r];
+              return (
+                <li
+                  key={r}
+                  className={`hand-card res-${r} ${n === 0 ? 'empty' : ''}`}
+                  title={`${n} ${RESOURCE_LABEL[r]}`}
+                >
+                  <div className="hand-card-art" aria-hidden="true">
+                    <ResourceArt resource={r} size={44} />
+                  </div>
+                  <div className="hand-card-count">{n}</div>
+                  <div className="hand-card-label">{RESOURCE_LABEL[r]}</div>
+                </li>
+              );
+            })}
           </ul>
           {!ended && (
             <div className="my-actions">
@@ -292,7 +302,16 @@ export const GameView = ({
                     onClick={() => spend(me.id, b.cost, b.note)}
                   >
                     <span className="build-btn-label">{b.label}</span>
-                    <span className="build-btn-cost">{formatBag(b.cost)}</span>
+                    <span className="build-btn-cost" aria-hidden="true">
+                      {RESOURCES.filter((r) => (b.cost[r] ?? 0) > 0).map((r) => (
+                        <span key={r} className={`cost-glyph res-${r}`}>
+                          {b.cost[r]! > 1 && (
+                            <span className="cost-glyph-n">{b.cost[r]}×</span>
+                          )}
+                          <ResourceArt resource={r} size={16} />
+                        </span>
+                      ))}
+                    </span>
                   </button>
                 );
               })}
@@ -350,8 +369,13 @@ export const GameView = ({
                   {isMe && <span className="muted small"> (you)</span>}
                   {isBankerRow && <span className="banker-badge">Banker</span>}
                 </span>
-                <span className="balance-hand-summary muted small">
-                  {formatBag(hand)}
+                <span className="balance-hand-summary" aria-hidden="true">
+                  {RESOURCES.map((r) => (
+                    <span key={r} className={`hand-mini res-${r} ${hand[r] === 0 ? 'empty' : ''}`}>
+                      <ResourceArt resource={r} size={18} />
+                      <span className="hand-mini-n">{hand[r]}</span>
+                    </span>
+                  ))}
                 </span>
                 <span className="balance-amount">{total}</span>
                 {!ended && iAmBanker && !isMe && (
@@ -390,7 +414,14 @@ export const GameView = ({
                   </span>
                   {t.note && <span className="txn-note muted small">{t.note}</span>}
                 </div>
-                <span className="txn-amount">{formatBag(t.resources)}</span>
+                <span className="txn-amount" aria-hidden="true">
+                  {RESOURCES.filter((r) => (t.resources[r] ?? 0) > 0).map((r) => (
+                    <span key={r} className={`cost-glyph res-${r}`}>
+                      <span className="cost-glyph-n">{t.resources[r]}</span>
+                      <ResourceArt resource={r} size={16} />
+                    </span>
+                  ))}
+                </span>
                 <span className="txn-time muted small">{txnTime(t.createdAt)}</span>
                 {!ended && iAmBanker && (
                   <button

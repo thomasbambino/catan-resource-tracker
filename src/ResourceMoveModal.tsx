@@ -15,6 +15,7 @@ import {
   isBank,
   partyName,
 } from './types';
+import { ResourceArt } from './icons';
 
 export interface MovePreset {
   from?: string;
@@ -199,7 +200,9 @@ export const ResourceMoveModal = ({
           <ul className="resource-steppers">
             {RESOURCES.map((r, i) => (
               <li key={r} className={`resource-stepper res-${r}`}>
-                <span className="resource-stepper-swatch" aria-hidden="true" />
+                <span className="resource-stepper-art" aria-hidden="true">
+                  <ResourceArt resource={r} size={30} />
+                </span>
                 <span className="resource-stepper-label">{RESOURCE_LABEL[r]}</span>
                 <div className="resource-stepper-controls">
                   <button

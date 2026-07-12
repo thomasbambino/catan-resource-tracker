@@ -1090,66 +1090,105 @@ h1, h2 { font-weight: 800; }
 .res-grain  { --swatch: var(--res-grain);  --swatch-ink: var(--res-grain-ink); }
 .res-ore    { --swatch: var(--res-ore);    --swatch-ink: var(--res-ore-ink); }
 
-/* Small number-of-cards suffix so the hand card still looks like the
-   money card visually (big number + tiny label). */
-.my-balance-suffix {
-  font-family: "Manrope", inherit;
-  font-weight: 600;
-  font-size: 18px;
-  letter-spacing: 0;
-  margin-left: 8px;
-  opacity: 0.85;
-  text-transform: lowercase;
+/* Hand card header — tiny "Your hand" label on the left, tiny total on the
+   right. Nothing gigantic — the resource piles below are the star. */
+.my-balance-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
+.my-balance-total {
+  font-family: "Manrope", inherit;
+  font-weight: 800;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.95);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.my-balance-total span {
+  font-weight: 600;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+.my-balance-total.pop { animation: balance-pop 650ms cubic-bezier(0.22, 1.2, 0.36, 1) both; }
 
-/* Per-resource chip row on the hand card. */
-.my-hand-chips {
+/* Row of resource piles — the visual centerpiece. Each pile is a small
+   card with the resource illustration on top, a big count under it, and
+   the resource name at the bottom. Empty piles fade out so the ones
+   you have jump out at a glance. */
+.hand-cards {
   list-style: none;
-  margin: 8px 0 18px;
+  margin: 0 0 18px;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
 }
-.hand-chip {
+.hand-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 8px 4px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-  font-family: "Manrope", inherit;
+  padding: 10px 4px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: var(--ink);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.10);
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
-.hand-chip-swatch {
-  width: 22px; height: 22px;
-  border-radius: 50%;
+/* Colored tab at the top so each pile is instantly identifiable by
+   silhouette + color, like real Catan cards. */
+.hand-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
   background: var(--swatch);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
-.hand-chip-count {
+.hand-card.empty {
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: none;
+  color: var(--ink-soft);
+}
+.hand-card.empty .hand-card-art { opacity: 0.35; }
+.hand-card.empty .hand-card-count { opacity: 0.5; }
+
+.hand-card-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  margin-top: 4px;
+}
+.hand-card-count {
+  font-family: "Manrope", inherit;
   font-weight: 800;
-  font-size: 18px;
-  font-variant-numeric: tabular-nums;
+  font-size: 22px;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
-.hand-chip-label {
+.hand-card-label {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  opacity: 0.85;
   text-align: center;
   line-height: 1.1;
+  color: var(--ink-soft);
 }
 
-/* Build buttons — square-ish tiles with the cost printed under the label. */
+/* Build buttons — same shape as before but the cost row now uses tiny
+   resource illustrations instead of "1B 1L" text. */
 .build-btn {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   padding: 10px 8px;
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.14);
@@ -1163,19 +1202,60 @@ h1, h2 { font-weight: 800; }
 .build-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.22); }
 .build-btn-label { font-size: 13px; font-weight: 800; }
 .build-btn-cost {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  opacity: 0.9;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cost-glyph {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 5px 2px 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 11px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
+.cost-glyph-n { line-height: 1; }
 .trade-btn { grid-column: 1 / -1; padding: 13px; }
 
 /* Compact resource summary on each player's row in the players list. */
 .balance-hand-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+}
+.hand-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px 2px 3px;
+  border-radius: var(--radius-pill);
+  background: var(--line-soft);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  margin-right: 6px;
+  color: var(--ink);
+}
+.hand-mini.empty { opacity: 0.3; }
+.hand-mini-n { line-height: 1; }
+
+/* On the log rows, the cost-glyph pills should read on the light card
+   background — override the translucent-white variant. */
+.txn-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.txn-amount .cost-glyph {
+  background: var(--line-soft);
+  border: 1px solid var(--line);
+  color: var(--ink);
 }
 
 /* Steppers inside the ResourceMoveModal. */
@@ -1190,17 +1270,18 @@ h1, h2 { font-weight: 800; }
 .resource-stepper {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
-  background: var(--line-soft);
+  background: #ffffff;
   border: 1px solid var(--line);
+  box-shadow: inset 4px 0 0 var(--swatch);
 }
-.resource-stepper-swatch {
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: var(--swatch);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+.resource-stepper-art {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
   flex-shrink: 0;
 }
 .resource-stepper-label { flex: 1; font-weight: 700; color: var(--ink); }
