@@ -380,15 +380,15 @@ export const GameView = ({
               </button>
               <button
                 type="button"
-                className="ghost seven-btn"
+                className={`ghost seven-btn ${iAmBanker ? 'half' : ''}`}
                 onClick={() => setDiscardOpen(true)}
               >
-                Rolled a 7 — discard cards
+                Rolled a 7
               </button>
               {iAmBanker && (
                 <button
                   type="button"
-                  className="ghost"
+                  className="ghost deal-btn"
                   onClick={() => setMove({ from: BANK, to: me.id, kind: 'gain' })}
                 >
                   <BankIcon size={16} /> Deal from bank

@@ -1322,7 +1322,9 @@ h1, h2 { font-weight: 800; }
   flex-shrink: 0;
 }
 
-/* Rolled-a-7 discard button (in the hand card's actions row). */
+/* Rolled-a-7 discard button (in the hand card's actions row). Spans both
+   columns on its own row for players; halves so the banker's "Deal from
+   bank" button fits alongside it. */
 .seven-btn {
   grid-column: 1 / -1;
   padding: 13px;
@@ -1332,7 +1334,17 @@ h1, h2 { font-weight: 800; }
   color: #ffffff;
   font-weight: 800;
 }
+.seven-btn.half { grid-column: auto; }
 .seven-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.22); }
+.deal-btn {
+  padding: 13px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  color: #ffffff;
+  font-weight: 800;
+}
+.deal-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.22); }
 
 /* ---------- discard-on-7 modal ---------- */
 .discard-modal { max-width: 560px; }
